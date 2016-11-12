@@ -50,7 +50,7 @@ app.use(router.routes())
 ## Config keys
 
 | Key | Type | Description |
-| ... | ... | ... |
+| --- | --- | --- |
 | url | <code>String</code> | URL for the route |
 | controller | <code>Object</code> | Object contains all actions needed. Is optional for child route. If not defined for child route, parent controller is used |
 | action | <code>String</code> | If not specified, index action is used |
