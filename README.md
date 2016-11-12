@@ -20,13 +20,13 @@ import Koa from "koa";
 import routerFactory from "koa-router-factory";
 
 const IndexController = {
-  index: async function () {
+  index: (async function () {
     this.body = "index action";
-  },
+  }),
 
-  secondAction: async function () {
+  secondAction: (async function () {
     this.body = "second action";
-  }
+  })
 }
 
 const app = new Koa();
