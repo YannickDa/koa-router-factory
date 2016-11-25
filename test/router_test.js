@@ -14,6 +14,23 @@ const testController = {
   })
 };
 
+const asyncAction = (async function () {
+  return new Promise(success => {
+    setTimeout(() => {
+      success("async function action");
+    }, 500);
+  })
+})
+
+const asyncTestFunction = (async function () {
+  const result = await asyncAction();
+  this.body = result;
+});
+
+const testFunction = (async function () {
+  this.body = "function action";
+});
+
 const createApp = router => {
   const app = new Koa();
   app.use(router.routes());
@@ -89,6 +106,44 @@ describe("Router Factory", () => {
       });
   });
 
+  it("Can create route for a particular HTTP verbs", done => {
+    const router = routerFactory({
+      index: {
+        url: "/index",
+        controller: testController,
+        method: ["put", "post"],
+        action: "testAction"
+      }
+    });
+
+    const app = createApp(router);
+
+    request(app)
+      .put("/index")
+      .expect(200)
+      .end((err, res) => {
+        if (err) return done(err);
+        expect(res.text).equal("test action");
+
+        request(app)
+          .post("/index")
+          .expect(200)
+          .end((err, res) => {
+            if (err) return done(err);
+            expect(res.text).equal("test action");
+
+            request(app)
+              .get("/index")
+              .expect(405)
+              .end((err, res) => {
+                if (err) return done(err);
+                expect(res.text).equal("Method Not Allowed");
+                done();
+              });
+          });
+      });
+  });
+
   it("Can create route with no action. Index action is used as default", done => {
     const router = routerFactory({
       index: {
@@ -119,6 +174,46 @@ describe("Router Factory", () => {
     };
 
     expect(() => routerFactory(routes)).to.throw(Error, "Missing action unknowAction for index route");
+  });
+
+  it("Can create route with a controller as a function instead of object", done => {
+    const router = routerFactory({
+      index: {
+        url: "/index",
+        controller: testFunction
+      }
+    });
+
+    const app = createApp(router);
+
+    request(app)
+      .get("/index")
+      .expect(200)
+      .end((err, res) => {
+        if (err) return done(err);
+        expect(res.text).equal("function action");
+        done();
+      });
+  });
+
+  it("Can create route with an async aciton", done => {
+    const router = routerFactory({
+      index: {
+        url: "/index",
+        controller: asyncTestFunction
+      }
+    });
+
+    const app = createApp(router);
+
+    request(app)
+      .get("/index")
+      .expect(200)
+      .end((err, res) => {
+        if (err) return done(err);
+        expect(res.text).equal("async function action");
+        done();
+      });
   });
 
   it("Can't create route without controller", () => {

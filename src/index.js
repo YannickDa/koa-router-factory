@@ -3,13 +3,19 @@ import Router from "koa-router";
 const parseRoute = (name, config, parentController) => {
   const router = new Router();
 
-  let method = "get";
+  let methods = ["get"];
   if (config.method) {
-    if (["get", "put", "post", "patch", "delete", "all"].indexOf(config.method) === -1) {
-      throw new Error(`method ${config.method} is not supported for route ${name}`);
+    if (!(config.method instanceof Array)) {
+      config.method = [config.method];
     }
 
-    method = config.method
+    config.method.forEach(method => {
+      if (["get", "put", "post", "patch", "delete", "all"].indexOf(method) === -1) {
+        throw new Error(`method ${method} is not supported for route ${name}`);
+      }
+    });
+
+    methods = config.method
   }
 
   const controller = config.controller ? config.controller:parentController;
@@ -17,13 +23,19 @@ const parseRoute = (name, config, parentController) => {
     throw new Error(`Missing controller for ${name} route`);
   }
 
-  const action = config.action ? config.action:"index";
-
-  if (!controller[action]) {
-    throw new Error(`Missing action ${action} for ${name} route`);
+  let action;
+  if (typeof controller === "object") {
+    action = config.action ? config.action:"index";
+    if (!controller[action]) {
+      throw new Error(`Missing action ${action} for ${name} route`);
+    }
   }
 
-  router[method].call(router, name, config.url, async ctx => await controller[action].call(ctx));
+  const actionCaller = action ? controller[action]:controller;
+
+  methods.forEach(method => {
+    router[method].call(router, name, config.url, async ctx => await actionCaller.call(ctx));
+  });
 
   if (config.childs) {
     Object.keys(config.childs).forEach(key => {
