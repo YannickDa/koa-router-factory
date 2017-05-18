@@ -1,4 +1,4 @@
-import Router from "koa-router";
+const Router = require("koa-router");
 
 const parseRoute = (name, config, parentController) => {
   const router = new Router();
@@ -34,7 +34,7 @@ const parseRoute = (name, config, parentController) => {
   const actionCaller = action ? controller[action]:controller;
 
   methods.forEach(method => {
-    router[method].call(router, name, config.url, async ctx => await actionCaller.call(ctx));
+    router[method].call(router, name, config.url, ctx => actionCaller.call(ctx));
   });
 
   if (config.childs) {
@@ -47,7 +47,7 @@ const parseRoute = (name, config, parentController) => {
   return router;
 };
 
-export default routes => {
+module.exports = function (routes) {
   const router = new Router();
 
   Object.keys(routes).forEach(key => {
